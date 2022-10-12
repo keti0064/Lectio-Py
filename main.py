@@ -2,10 +2,10 @@ import requests
 from bs4 import  BeautifulSoup
 from lxml import html
 
-Username = "XXXXXXX"
-Password = "XXXX"
-SchoolID = "XXXXX"
-StudentID = "XXXXXXXXX"
+Username = "21Epsilon16"
+Password = "fwr43bgk"
+SchoolID = "523"
+StudentID = "48261254615"
 session = ""
 
 postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(SchoolID)
@@ -43,6 +43,10 @@ def get_soup(url):
 
 
 class Skema:
+
+    def __init__(self):
+        print("skema init")
+
     skemaURL = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(SchoolID, StudentID)
     skemaSoup = get_soup(skemaURL)
 
@@ -59,14 +63,14 @@ class Skema:
 
     def get_all_aflyst(self):
         aflyst_list = []
-        for a in Skema.skemaSoup.find_all("a", class_="s2skemabrik s2bgbox s2cancelled"):
+        for a in Skema.skemaSoup.find_all("a", class_="s2skemabrik s2bgbox s2cancelled s2brik lec-context-menu-instance"):
             aflyst_list.append(a.text)
+        #print(Skema.skemaSoup)
         return aflyst_list
 
 
-    def get_one_day(day_int):
+    def get_one_day(self, day_int):
         td = Skema.skemaSoup.select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
-
         try:
             div_td = td[0].select("a")
         except IndexError:
@@ -79,7 +83,7 @@ class Skema:
 
         return link_data
 
-    def get_one_day_short(day_int):
+    def get_one_day_short(self, day_int):
         td = Skema.skemaSoup.select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
         link_data = []
         try:
@@ -116,18 +120,24 @@ def slice_string(string_to_slice,word_at_slice):
 
 
 class Lektier:
+    def __init__(self):
+        print("lektier init")
+
     url = "https://www.lectio.dk/lectio/{0}/material_lektieoversigt.aspx?elevid={1}".format(SchoolID, StudentID)
     lektieSoup = get_soup(url)
 
     def get_all_lektier_objects(self):
         lektie_list = []
         for a in Lektier.lektieSoup.find_all("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance"):
-            lektie_list.append(a.getText)
+            lektie_list.append(a.get('data-additionalinfo'))
+
         return lektie_list
 
-
     def get_nearest_lektie(self):
-        return Lektier.lektieSoup.find("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance").getText
+        data = Lektier.lektieSoup.find("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance")
+        return data.get('data-additionalinfo')
 
 
+skema = Skema()
 
+lektie = Lektier()

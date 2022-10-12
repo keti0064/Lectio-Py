@@ -2,10 +2,10 @@ import requests
 from bs4 import  BeautifulSoup
 from lxml import html
 
-Username = "21Epsilon16"
-Password = "fwr43bgk"
-SchoolID = "523"
-StudentID = "48261254615"
+Username = "XXXXXXX"
+Password = "XXXX"
+SchoolID = "XXXXX"
+StudentID = "XXXXXXXXX"
 session = ""
 
 postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(SchoolID)
@@ -130,4 +130,4 @@ class Lektier:
         return Lektier.lektieSoup.find("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance").getText
 
 
-print(Skema.get_one_day_short(4))
+

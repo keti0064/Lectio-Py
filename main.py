@@ -138,6 +138,48 @@ class Lektier:
         return data.get('data-additionalinfo')
 
 
+class Opgaver:
+
+    def __init__(self):
+        print("opgaver init")
+
+    url = "https://www.lectio.dk/lectio/{0}/OpgaverElev.aspx?elevid={1}".format(SchoolID,StudentID)
+    opg_soup = get_soup(url)
+
+    ls_mangler = []
+    for span in opg_soup.find_all("span",class_="exercisemissing"):
+        ls_mangler.append(span)
+
+
+
+    ls_venter = []
+    for span in opg_soup.find_all("span", class_="exercisewait"):
+        ls_venter.append(span)
+
+    def get_one_missing(self, num):
+        data = opgaver.ls_mangler[num]
+        uge = data.parent.parent.find("td").find("span",class_="tooltip").get("title")
+        fag = data.parent.parent.find("td", class_="nowrap").text
+        note = data.parent.parent.find("a").text
+        tid = data.parent.parent.find_all("td")[3].text
+        elevtimer = data.parent.parent.find("td", class_="numCell").text
+        layout = fag + " | "+ uge + " | "+ tid+ " | "+ elevtimer+ " elevtimer | "+ note
+        return layout
+
+
+    def get_one_wait(self, num):
+        data = opgaver.ls_mangler[num]
+        uge = data.parent.parent.find("td").find("span", class_="tooltip").get("title")
+        fag = data.parent.parent.find("td", class_="nowrap").text
+        note = data.parent.parent.find("a").text
+        tid = data.parent.parent.find_all("td")[3].text
+        elevtimer = data.parent.parent.find("td", class_="numCell").text
+        layout = fag + " | " + uge + " | " + tid + " | " + elevtimer + " elevtimer | " + note
+        return layout
+
 skema = Skema()
 
 lektie = Lektier()
+
+opgaver = Opgaver()
+

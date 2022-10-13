@@ -45,7 +45,7 @@ def get_soup(url):
 class Skema:
 
     def __init__(self):
-        print("skema init")
+        pass
 
     skemaURL = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(SchoolID, StudentID)
     skemaSoup = get_soup(skemaURL)
@@ -120,7 +120,7 @@ def slice_string(string_to_slice,word_at_slice):
 
 class Lektier:
     def __init__(self):
-        print("lektier init")
+        pass
 
     url = "https://www.lectio.dk/lectio/{0}/material_lektieoversigt.aspx?elevid={1}".format(SchoolID, StudentID)
     lektieSoup = get_soup(url)
@@ -140,7 +140,7 @@ class Lektier:
 class Opgaver:
 
     def __init__(self):
-        print("opgaver init")
+        pass
 
     url = "https://www.lectio.dk/lectio/{0}/OpgaverElev.aspx?elevid={1}".format(SchoolID,StudentID)
     opg_soup = get_soup(url)
@@ -154,13 +154,13 @@ class Opgaver:
         ls_venter.append(span)
 
     def get_data(self, list_used, num):
-        data = list_used[num]
-        uge = data.parent.parent.find("td").find("span", class_="tooltip").get("title")
-        fag = data.parent.parent.find("td", class_="nowrap").text
-        note = data.parent.parent.find("a").text
-        tid = data.parent.parent.find_all("td")[3].text
-        elevtimer = data.parent.parent.find("td", class_="numCell").text
-        layout = fag + " | " + uge + " | " + tid + " | " + elevtimer + " elevtimer | " + note
+        data = list_used[num].parent.parent
+        uge = data.find("td").find("span", class_="tooltip").get("title")
+        fag = data.find("td", class_="nowrap").text
+        note = data.find("a").text
+        tid = data.find_all("td")[3].text
+        elevtimer = data.find("td", class_="numCell").text
+        layout = "{0:>10} | {1} | {2} | {3} elevtimer | {4}".format(fag,uge,tid,elevtimer,note)
         return layout
 
     def get_one_missing(self, num):
@@ -171,5 +171,8 @@ class Opgaver:
         return opgaver.get_data(opgaver.ls_venter, num)
 
 skema = Skema()
+
 lektie = Lektier()
+
 opgaver = Opgaver()
+

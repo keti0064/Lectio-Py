@@ -6,7 +6,7 @@ Username = "21Epsilon16"
 Password = "fwr43bgk"
 SchoolID = "523"
 StudentID = "48261254615"
-session = ""
+
 
 postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(SchoolID)
 forsideURL = "https://www.lectio.dk/lectio/{0}/forside.aspx?elevid={1}".format(SchoolID, StudentID)
@@ -65,10 +65,9 @@ class Skema:
         aflyst_list = []
         for a in Skema.skemaSoup.find_all("a", class_="s2skemabrik s2bgbox s2cancelled s2brik lec-context-menu-instance"):
             aflyst_list.append(a.text)
-        #print(Skema.skemaSoup)
         return aflyst_list
 
-
+    # mandag er day_int = 2
     def get_one_day(self, day_int):
         td = Skema.skemaSoup.select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
         try:
@@ -150,25 +149,12 @@ class Opgaver:
     for span in opg_soup.find_all("span",class_="exercisemissing"):
         ls_mangler.append(span)
 
-
-
     ls_venter = []
     for span in opg_soup.find_all("span", class_="exercisewait"):
         ls_venter.append(span)
 
-    def get_one_missing(self, num):
-        data = opgaver.ls_mangler[num]
-        uge = data.parent.parent.find("td").find("span",class_="tooltip").get("title")
-        fag = data.parent.parent.find("td", class_="nowrap").text
-        note = data.parent.parent.find("a").text
-        tid = data.parent.parent.find_all("td")[3].text
-        elevtimer = data.parent.parent.find("td", class_="numCell").text
-        layout = fag + " | "+ uge + " | "+ tid+ " | "+ elevtimer+ " elevtimer | "+ note
-        return layout
-
-
-    def get_one_wait(self, num):
-        data = opgaver.ls_mangler[num]
+    def get_data(self, list_used, num):
+        data = list_used[num]
         uge = data.parent.parent.find("td").find("span", class_="tooltip").get("title")
         fag = data.parent.parent.find("td", class_="nowrap").text
         note = data.parent.parent.find("a").text
@@ -177,9 +163,13 @@ class Opgaver:
         layout = fag + " | " + uge + " | " + tid + " | " + elevtimer + " elevtimer | " + note
         return layout
 
+    def get_one_missing(self, num):
+        return opgaver.get_data(opgaver.ls_mangler,num)
+
+
+    def get_one_wait(self, num):
+        return opgaver.get_data(opgaver.ls_venter, num)
+
 skema = Skema()
-
 lektie = Lektier()
-
 opgaver = Opgaver()
-

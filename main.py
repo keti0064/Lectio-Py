@@ -212,7 +212,7 @@ def opgave_3():
         opgave_ls.append(opgaver.get_one_wait(i))
     return opgave_ls
 
-# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note.
+# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note på modulet.
 def format_modul(modul):
     modul_ls = modul.split('\n')
     layout6 = "{0} | {1} | {2} | {3}"

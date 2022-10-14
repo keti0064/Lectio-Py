@@ -95,13 +95,13 @@ class Skema:
             a_data = a.get("data-additionalinfo")
 
             if a_data == None:
-                link_data.append("---")
-
-            elif "Øvrigt indhold:" in a_data:
-                link_data.append(slice_string(a_data, "Øvrigt indhold:"))
+                pass
 
             elif "Lektier:" in a_data:
                 link_data.append(slice_string(a_data, "Lektier:"))
+
+            elif "Øvrigt indhold:" in a_data:
+                link_data.append(slice_string(a_data, "Øvrigt indhold:"))
 
             elif "Note:" in a_data:
                 link_data.append(slice_string(a_data, "Note:"))
@@ -175,4 +175,3 @@ skema = Skema()
 lektie = Lektier()
 
 opgaver = Opgaver()
-

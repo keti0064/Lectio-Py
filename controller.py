@@ -34,3 +34,13 @@ def opgave_3():
         opgave_ls.append(lectio.opgaver.get_one_wait(i))
     return opgave_ls
 
+# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note. 
+test_data = skema_i_dag()[1]
+print(test_data)
+
+print("\n" in test_data)
+
+num = 0
+for w in test_data.split('\n'):
+        num +=1
+print("n: "+ str(num))

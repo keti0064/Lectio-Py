@@ -3,7 +3,7 @@ from bs4 import  BeautifulSoup
 from lxml import html
 
 Username = "21Epsilon16"
-Password = "fwr43bgk"
+Password = "mmmmmmmmmmmmm"
 SchoolID = "523"
 StudentID = "48261254615"
 

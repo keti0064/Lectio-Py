@@ -1,11 +1,12 @@
 import requests
+from datetime import datetime
 from bs4 import  BeautifulSoup
 from lxml import html
 
-Username = "21Epsilon16"
-Password = "mmmmmmmmmmmmm"
-SchoolID = "523"
-StudentID = "48261254615"
+Username = "lectio brugernavn"
+Password = "lectio adgangskode"
+SchoolID = "din skoles lectio id"
+StudentID = "din elev id"
 
 
 postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(SchoolID)
@@ -175,3 +176,49 @@ skema = Skema()
 lektie = Lektier()
 
 opgaver = Opgaver()
+
+
+# mere brugervenlige funktioner:
+current_time = datetime.now()
+
+
+# returnere skemaet for i dag i en liste, hvor ver object er et modul
+def skema_i_dag():
+    return skema.get_one_day_short(current_time.weekday()+2)
+
+# returnere en liste med dage, hver dag er en liste for sig selv med moduler
+def skema_uge():
+    skema_ls = []
+    for day in range (2,7):
+        skema_ls.append(skema.get_one_day_short(day))
+    return  skema_ls
+# returnere den nærmeste lektie
+def lektie_1():
+    return lektie.get_nearest_lektie()
+
+
+# returner de 3 nærmeste lektier
+def lektie_3():
+    lektie_ls = []
+    for x in range(0,2):
+        lektie_ls.append(lektie.get_all_lektier_objects()[x])
+    return lektie_ls
+
+
+# Returner de 3 tætteste opgaver i en liste
+def opgave_3():
+    opgave_ls = []
+    for i in range(0,4):
+        opgave_ls.append(opgaver.get_one_wait(i))
+    return opgave_ls
+
+# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note.
+def format_modul(modul):
+    modul_ls = modul.split('\n')
+    layout6 = "{0} | {1} | {2} | {3}"
+    layout7 = "{0} | {1} | {2} | {3} | {4}"
+
+    if len(modul_ls) == 6:
+        return layout6.format(modul_ls[0],modul_ls[2],modul_ls[3], modul_ls[1])
+    elif len(modul_ls) == 7:
+        return layout7.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[0], modul_ls[2])

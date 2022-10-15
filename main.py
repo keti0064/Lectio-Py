@@ -212,13 +212,25 @@ def opgave_3():
         opgave_ls.append(opgaver.get_one_wait(i))
     return opgave_ls
 
-# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note på modulet.
+""" split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note på modulet.
+    tager også højde for aflyste eller ændrede moduler
+"""
 def format_modul(modul):
     modul_ls = modul.split('\n')
     layout6 = "{0} | {1} | {2} | {3}"
     layout7 = "{0} | {1} | {2} | {3} | {4}"
 
-    if len(modul_ls) == 6:
+    layout6_AE = "{0} | Ændret! | {1} | {2} | {3}"
+    layout7_AE = "{0} | Ændret! | {1} | {2} | {3} | {4}"
+    if modul_ls[0].startswith("Ændret!"):
+        if len(modul_ls) == 7:
+            return layout6_AE.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[2])
+        elif len(modul_ls) == 8:
+            return layout7_AE.format(modul_ls[2],modul_ls[4],modul_ls[5], modul_ls[1], modul_ls[3])
+    elif modul_ls[0] == "Aflyst!":
+        return "Aflyst modul!"
+    elif len(modul_ls) == 6:
         return layout6.format(modul_ls[0],modul_ls[2],modul_ls[3], modul_ls[1])
     elif len(modul_ls) == 7:
         return layout7.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[0], modul_ls[2])
+    

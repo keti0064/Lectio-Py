@@ -44,32 +44,30 @@ def get_soup(url):
 
 
 class Skema:
-
-    def __init__(self):
-        pass
-
     skemaURL = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(SchoolID, StudentID)
     skemaSoup = get_soup(skemaURL)
 
-
-    def test_skema(self):
+    @staticmethod
+    def test_skema():
         return Skema.skemaSoup.prettify()
 
-
-    def get_eksame_for_all_days(self):
+    @staticmethod
+    def get_eksame_for_all_days():
         eksame_list = []
         for obj in Skema.skemaSoup.select("a .s2skemabrik s2bgbox s2bgboxeksamen s2brik lec-context-menu-instance .s2skemabrikInnerContainer"):
             eksame_list.append(obj)
         return eksame_list
 
-    def get_all_aflyst(self):
+    @staticmethod
+    def get_all_aflyst():
         aflyst_list = []
         for a in Skema.skemaSoup.find_all("a", class_="s2skemabrik s2bgbox s2cancelled s2brik lec-context-menu-instance"):
             aflyst_list.append(a.text)
         return aflyst_list
 
     # mandag er day_int = 2
-    def get_one_day(self, day_int):
+    @staticmethod
+    def get_one_day(day_int):
         td = Skema.skemaSoup.select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
         try:
             div_td = td[0].select("a")
@@ -83,7 +81,8 @@ class Skema:
 
         return link_data
 
-    def get_one_day_short(self, day_int):
+    @staticmethod
+    def get_one_day_short(day_int):
         td = Skema.skemaSoup.select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
         link_data = []
         try:
@@ -120,29 +119,24 @@ def slice_string(string_to_slice,word_at_slice):
 
 
 class Lektier:
-    def __init__(self):
-        pass
-
     url = "https://www.lectio.dk/lectio/{0}/material_lektieoversigt.aspx?elevid={1}".format(SchoolID, StudentID)
     lektieSoup = get_soup(url)
 
-    def get_all_lektier_objects(self):
+    @staticmethod
+    def get_all_lektier_objects():
         lektie_list = []
         for a in Lektier.lektieSoup.find_all("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance"):
             lektie_list.append(a.get('data-additionalinfo'))
 
         return lektie_list
 
-    def get_nearest_lektie(self):
+    @staticmethod
+    def get_nearest_lektie():
         data = Lektier.lektieSoup.find("a", class_="s2skemabrik s2bgbox s2brik lec-context-menu-instance")
         return data.get('data-additionalinfo')
 
 
 class Opgaver:
-
-    def __init__(self):
-        pass
-
     url = "https://www.lectio.dk/lectio/{0}/OpgaverElev.aspx?elevid={1}".format(SchoolID,StudentID)
     opg_soup = get_soup(url)
 
@@ -154,7 +148,8 @@ class Opgaver:
     for span in opg_soup.find_all("span", class_="exercisewait"):
         ls_venter.append(span)
 
-    def get_data(self, list_used, num):
+    @staticmethod
+    def get_data(list_used, num):
         data = list_used[num].parent.parent
         uge = data.find("td").find("span", class_="tooltip").get("title")
         fag = data.find("td", class_="nowrap").text
@@ -164,18 +159,20 @@ class Opgaver:
         layout = "{0:>10} | {1} | {2} | {3} elevtimer | {4}".format(fag,uge,tid,elevtimer,note)
         return layout
 
-    def get_one_missing(self, num):
-        return opgaver.get_data(opgaver.ls_mangler,num)
+    @staticmethod
+    def get_one_missing(num):
+        return Opgaver.get_data(Opgaver.ls_mangler,num)
 
+    @staticmethod
+    def get_one_wait(num):
+        return Opgaver.get_data(Opgaver.ls_venter, num)
 
-    def get_one_wait(self, num):
-        return opgaver.get_data(opgaver.ls_venter, num)
 
 skema = Skema()
 
 lektie = Lektier()
 
-opgaver = Opgaver()
+
 
 
 # mere brugervenlige funktioner:
@@ -209,12 +206,10 @@ def lektie_3():
 def opgave_3():
     opgave_ls = []
     for i in range(0,4):
-        opgave_ls.append(opgaver.get_one_wait(i))
+        opgave_ls.append(Opgaver.get_one_wait(i))
     return opgave_ls
 
-""" split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note på modulet.
-    tager også højde for aflyste eller ændrede moduler
-"""
+# split modul op efter hvor mange newlines der er. hvis der er 7 er der en note som er på plads 0, hvis der er 6 er der ikke nogen note.
 def format_modul(modul):
     modul_ls = modul.split('\n')
     layout6 = "{0} | {1} | {2} | {3}"
@@ -233,4 +228,4 @@ def format_modul(modul):
         return layout6.format(modul_ls[0],modul_ls[2],modul_ls[3], modul_ls[1])
     elif len(modul_ls) == 7:
         return layout7.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[0], modul_ls[2])
-    
+

@@ -228,4 +228,5 @@ def format_modul(modul):
         return layout6.format(modul_ls[0],modul_ls[2],modul_ls[3], modul_ls[1])
     elif len(modul_ls) == 7:
         return layout7.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[0], modul_ls[2])
-
+    else:
+        return modul.replace("\n", " | ")

@@ -156,7 +156,7 @@ class Opgaver:
         note = data.find("a").text
         tid = data.find_all("td")[3].text
         elevtimer = data.find("td", class_="numCell").text
-        layout = "{0:>10} | {1} | {2} | {3} elevtimer | {4}".format(fag,uge,tid,elevtimer,note)
+        layout = "{0:>10} | {2} | {3} ET | {4}".format(fag,uge,tid,elevtimer,note)
         return layout
 
     @staticmethod
@@ -172,7 +172,50 @@ skema = Skema()
 
 lektie = Lektier()
 
+class Lokale:
+    @staticmethod
+    def get_lokale_soup(lokale_id):
+        lokaleURL = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=lokale&nosubnav=1&id={1}".format(SchoolID,lokale_id)
+        return get_soup(lokaleURL)
 
+    @staticmethod
+    def test_lokale_soup(lokale_id):
+        print(Lokale.get_lokale_soup(lokale_id))
+
+    @staticmethod
+    def get_one_day(day_int,lokale_id):
+        td = Lokale.get_lokale_soup(lokale_id).select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
+        try:
+            div_td = td[0].select("a")
+        except IndexError:
+            return ""
+
+        link_data = []
+
+        for a in div_td:
+            link_data.append(a.get("data-additionalinfo"))
+
+        return link_data
+    @staticmethod
+    def get_one_day_short(day_int,lokale_id):
+        td = Lokale.get_lokale_soup(lokale_id).select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
+        try:
+            div_td = td[0].select("a")
+        except IndexError:
+            return ""
+
+        link_data = []
+
+        for a in div_td:
+            try:
+                data = a.get("data-additionalinfo")
+
+                link_data.append("\n".join(data.split("\n", 4)[0:4]))
+            except:
+                pass
+
+
+        return link_data
 
 
 # mere brugervenlige funktioner:
@@ -217,6 +260,8 @@ def format_modul(modul):
 
     layout6_AE = "{0} | Ændret! | {1} | {2} | {3}"
     layout7_AE = "{0} | Ændret! | {1} | {2} | {3} | {4}"
+
+
     if modul_ls[0].startswith("Ændret!"):
         if len(modul_ls) == 7:
             return layout6_AE.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[2])
@@ -230,3 +275,25 @@ def format_modul(modul):
         return layout7.format(modul_ls[1],modul_ls[3],modul_ls[4], modul_ls[0], modul_ls[2])
     else:
         return modul.replace("\n", " | ")
+
+
+
+def kort_format_modul(modul):
+    modul_ls = modul.split('\n')
+    layout6 = "{3},{2}"
+    layout7 = "{4},{2}"
+
+    layout6_AE = "{3},{2}"
+    layout7_AE = "{4},{2}"
+    if modul_ls[0].startswith("Ændret!"):
+        if len(modul_ls) == 7:
+            return layout6_AE.format(modul_ls[1], modul_ls[3], modul_ls[4], modul_ls[2])
+        elif len(modul_ls) == 8:
+            return layout7_AE.format(modul_ls[2], modul_ls[4], modul_ls[5], modul_ls[1], modul_ls[3])
+    elif modul_ls[0] == "Aflyst!":
+        return "Aflyst modul!,{0}".format(modul_ls[2])
+    elif len(modul_ls) == 6:
+        return layout6.format(modul_ls[0], modul_ls[2], modul_ls[3], modul_ls[1])
+    elif len(modul_ls) == 7:
+        return layout7.format(modul_ls[1], modul_ls[3], modul_ls[4], modul_ls[0], modul_ls[2])
+

@@ -196,8 +196,8 @@ class Lokale:
             link_data.append(a.get("data-additionalinfo"))
 
         return link_data
-     @staticmethod
-     def get_one_day_short(day_int,lokale_id):
+    @staticmethod
+    def get_one_day_short(day_int,lokale_id):
         td = Lokale.get_lokale_soup(lokale_id).select("tr:nth-of-type(4) td:nth-of-type({})".format(day_int))
         try:
             div_td = td[0].select("a")

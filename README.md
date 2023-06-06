@@ -1,4 +1,4 @@
 # Lectio-Py
-python Lectio API
+python Lectio bibliotek
 
 Et program der læser lectio fra en elev bruger

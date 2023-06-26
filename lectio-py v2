@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+from kivymd.app import MDApp
+from kivymd.uix.label import MDLabel
+
+
+def getLoginSession(username,password,schoolID):
+    postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(schoolID)
+
+    loginSession = requests.session()
+
+    # anskaffer eventvali ved at lave en normal get til login siden og kigge html igennem for at finde værdien :)
+    eventValidationValue = BeautifulSoup(loginSession.get(postUrl).content,"html.parser").find("input", id="__EVENTVALIDATION")["value"]
+
+    # http request data
+    loginPayload = {
+        "m$Content$username": username,
+        "m$Content$password": password,
+        "m$Content$passwordHidden": password,
+        "__EVENTVALIDATION": eventValidationValue,
+        "__EVENTTARGET": "m$Content$submitbtn2",
+        "__EVENTARGUMENT": "",
+        "masterfootervalue": "X1!ÆØÅ",
+        "LectioPostbackId": ""
+    }
+    loginSession.post(postUrl,data=loginPayload)
+    return loginSession
+
+# retunere suppen til en URL med den active session(altså det aktive login :)
+def getSoup(URL, activeSession):
+    return BeautifulSoup(activeSession.get(URL).content,"html.parser")
+
+
+# grafiske interface
+class app(MDApp):
+    def build(self):
+        label = MDLabel(text="hellooo", halign='center',theme_text_color='Error')
+        return label
+
+app().run()

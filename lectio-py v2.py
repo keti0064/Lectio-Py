@@ -31,7 +31,8 @@ def getLoginSession(username,password,schoolID):
 def getSoup(URL, session):
     return BeautifulSoup(session.get(URL).content,"html.parser")
 
-
+def postSoup(URL,session,payload):
+    return BeautifulSoup(session.post(URL,data=payload).content,"html.parser")
 
 def get_elev_ID(skoleID,session):
     # går ind på forsiden (den kræver ikke elevid i URL men kun cookie) elevID findes i en specifik a-tag da den linker
@@ -81,7 +82,8 @@ def get_all_messages(skoleID,elevID,session):
 
 
         ID_tag = (tr.findNext("a",tabindex="0")["onclick"])
-        ID = ID_tag[ID_tag.index("MC_$_")+5:ID_tag.index(")")]
+        # skal minus med 1 for at ikke få et ' med
+        ID = ID_tag[ID_tag.index("MC_$_")+5:ID_tag.index(")")-1]
 
 
         besked = Besked(td_list_text[3].replace("\n",""),td_list_text[4],td_list_text[6],td_list_text[5],td_list_text[8],ID)
@@ -102,16 +104,32 @@ class Besked:
     def consolePrintMessageInfo(self):
         print(self.titel,self.sender,self.modtager,self.seneste_besked,self.dato,self.ID)
 
+    # det her er besværligt da det kræver viewstatex i en post request for at få den her side som bliver lavet om hver gang man går ind på besked forsiden selv i samme session :(
     def getMessageDialog(self,skoleID,elevID,session):
         besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=showthread&elevid={1}&selectedfolderid=-70&id={2}".format(skoleID,elevID,self.ID)
+        besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(skoleID, elevID)
 
-        pageSoup = getSoup(besked_url,session)
-        print(pageSoup.prettify())
+        viewstatex_value = getSoup(besked_forside_url,session).find("input", id="__VIEWSTATEX")["value"]
+
+        postPayload = {
+            "__EVENTTARGET": "__PAGE",
+            "__EVENTARGUMENT": "$LB2$_MC_$_{}".format(self.ID),
+            "__VIEWSTATEX": viewstatex_value,
+            "__VIEWSTATEY_KEY":"",
+            "__VIEWSTATE":"",
+            "__VIEWSTATEENCRYPTED":"",
+            "masterfootervalue":    "X1!ÆØÅ",
+            "LectioPostbackId": ""
+        }
+
+
+        pageSoup = postSoup(besked_url,session,postPayload)
+        return pageSoup
 
 
 
 #test
-sesh = getLoginSession("","","523")
+sesh = getLoginSession("21Epsilon16","fwr43bgk","523")
 e_id= get_elev_ID("523",sesh)
 
 a = get_all_messages("523",e_id,sesh)

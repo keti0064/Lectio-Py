@@ -129,7 +129,7 @@ class Besked:
 
 
 #test
-sesh = getLoginSession("21Epsilon16","fwr43bgk","523")
+sesh = getLoginSession("","","523")
 e_id= get_elev_ID("523",sesh)
 
 a = get_all_messages("523",e_id,sesh)

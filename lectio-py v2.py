@@ -124,7 +124,19 @@ class Besked:
 
 
         pageSoup = postSoup(besked_url,session,postPayload)
-        return pageSoup
+        # sorter efter svar
+        svar = pageSoup.find("ul",id="s_m_Content_Content_ThreadList").findAll("li")
+        for s in svar:
+            style = s["style"][13]
+
+            # sender:
+            sender = s.find("span").text
+            # text
+
+            tab = "\t"*int(style)
+            text = s.find("div").text
+            text = text.replace("\r","").replace("\n","\n"+tab)
+            print(tab,"[x]",sender,"\n",tab,text,"\n")
 
 
 

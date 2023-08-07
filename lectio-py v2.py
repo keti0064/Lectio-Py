@@ -10,7 +10,7 @@ def getLoginSession(username,password,schoolID):
 
     loginSession = requests.session()
 
-    # anskaffer eventvali ved at lave en normal get til login siden og kigge html igennem for at finde værdien :)
+    # anskaffer eventvali ved at lave en normal http get til login siden og kigge html igennem for at finde værdien :)
     eventValidationValue = BeautifulSoup(loginSession.get(postUrl).content,"html.parser").find("input", id="__EVENTVALIDATION")["value"]
 
     # http request payload

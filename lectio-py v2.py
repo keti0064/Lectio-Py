@@ -139,13 +139,92 @@ class Besked:
             print(tab,"[x]",sender,"\n",tab,text,"\n")
 
 
+# anskaf alle moduler i DENNE uge.
+
+def get_moduler_this_week(schoolID,elevID,session):
+    siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(schoolID,elevID)
+    siteSoup = getSoup(siteUrl, session)
+
+    # find alle moduler, de kan blive placeret ud fra dato som står på modulet.
+    days = siteSoup.findAll("div", {"class":"s2skemabrikcontainer lec-context-menu-instance"})
+    moduler = []
+    for day in days:
+        # generer modul objekter
+        moduler.append(day.findAll("a"))
+    for dag,modul in enumerate(moduler):
+        for a_num, a_tag in enumerate(modul):
+
+
+
+            data = a_tag.find("div",{"class":"s2skemabrikcontent"})
+            #print(modul)
+            if data != None:
+
+                print("////////////////////////\nNYT MODUL\n")
+
+                # modul data
+                modul_lære = []
+                modul_hold = []
+
+                modul_status = a_tag.attrs["class"][2]
+                all_span = data.findAll("span")
+                for span in all_span:
+                    try:
+                        # her findes hold og lærer, de sepereres ved at kigge på de første karaktere i contextcard
+                        # hold starter med HE, og lærer starter med T, derefter er holdet/lærerens ID
+                        contextCardData = span.text
+                        contextCardID = span.attrs['data-lectiocontextcard']
+
+                        if contextCardID[1]=="E":
+                            modul_hold.append(contextCardData)
+                        elif contextCardID[0] == "T":
+                            modul_lære.append(contextCardData)
+                    except:
+                        # her findes titlen til modulet, da span tagget med titlen ikke har en contextcard attr
+                        # som den eneste.
+                        modul_titel = span.text
+
+                print(modul_titel+"\n"+modul_status+"\n"+" ".join(modul_hold)+"\n"+" ".join(modul_lære))
+
+                print("\nFÆRDIGT MODUL\n////////////////////////\n")
+            else:
+                continue
+
+class Modul:
+    #anskaffer modulerne ude fra, men de bliver lavet til objekter her. som tillader nem refferat og nemt tilgængeligt
+    #data fra hvert modul og data fra modulets side
+
+    def __init__(self, fag,lærer,hold, position,lokale,tid,note,lektie,eksta_indhold,status,id):
+        self.fag = fag
+        self.lærer = lærer
+        self. hold = hold
+        self.position = position
+        self.lokale = lokale
+        self.tid = tid
+        self.note = note
+        self.lektie = lektie
+        self.ekstra_indhold = eksta_indhold
+        self.status = status
+        self.id = id
+
+    def get_site_data(self,skoleID,elevID):
+        #Her behøves der ikke at anskaffes viewstatex, get requesten kan bare køres direkte
+
+        siteURL = "/lectio/{0}/aktivitet/aktivitetforside2.aspx?absid={1}&prevurl=SkemaNy.aspx%3ftype%3delev%26elevid%3d{2}&elevid={2}".format(skoleID,self.id,elevID)
+
+        pageSoup = getSoup(siteURL)
+
+
+        #midlertidlig test
+        print(pageSoup.text)
+
+
 
 #test
 sesh = getLoginSession("","","523")
 e_id= get_elev_ID("523",sesh)
 
-a = get_all_messages("523",e_id,sesh)
-a[1].getMessageDialog("523",e_id,sesh)
+get_moduler_this_week("523",e_id,sesh)
 
 
 """

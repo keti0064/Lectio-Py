@@ -161,7 +161,21 @@ def get_moduler_this_week(schoolID,elevID,session):
             if data != None:
 
                 print("////////////////////////\nNYT MODUL\n")
+                modul_titel = ""
+                a_tag_href= a_tag["href"]
+                a_tag_style = a_tag["style"]
 
+                # hvert modul har et tool tip hvor lokale, note og tidspunkt står i.
+                a_tag_additional_info = a_tag["data-additionalinfo"]
+                Lokale_Index = a_tag_additional_info.index("Lokale:")+8
+                print(a_tag_additional_info[Lokale_Index:a_tag_additional_info.find("\n",Lokale_Index)])
+
+
+                # modulets ID ligger i modulets link i absid attributten
+                modul_ID= a_tag_href[a_tag_href.index("absid=")+6:a_tag_href.index("&")]
+
+                # den fysiske position på dagens skema ligger i modulets stil, samt størrelsen af modulet
+                modul_pos = a_tag_style
                 # modul data
                 modul_lære = []
                 modul_hold = []
@@ -184,7 +198,7 @@ def get_moduler_this_week(schoolID,elevID,session):
                         # som den eneste.
                         modul_titel = span.text
 
-                print(modul_titel+"\n"+modul_status+"\n"+" ".join(modul_hold)+"\n"+" ".join(modul_lære))
+                print(str(dag)+"\n"+modul_titel+"\n"+"modul_lokale"+"\n"+modul_status+"\n"+" ".join(modul_hold)+"\n"+" ".join(modul_lære)+"\n"+modul_ID+"\n"+modul_pos)
 
                 print("\nFÆRDIGT MODUL\n////////////////////////\n")
             else:
@@ -194,8 +208,7 @@ class Modul:
     #anskaffer modulerne ude fra, men de bliver lavet til objekter her. som tillader nem refferat og nemt tilgængeligt
     #data fra hvert modul og data fra modulets side
 
-    def __init__(self, fag,lærer,hold, position,lokale,tid,note,lektie,eksta_indhold,status,id):
-        self.fag = fag
+    def __init__(self, lærer,hold, position,lokale,tid,note,lektie,eksta_indhold,status,id):
         self.lærer = lærer
         self. hold = hold
         self.position = position

@@ -2,6 +2,8 @@ Ting der skal laves til LectioPy2:
 
 Hente skema for specifik uge      []
 
+Fikse lokale mangler sidste char  []
+
 Hente data fra modul side         []
 
 Sende beskeder                    []

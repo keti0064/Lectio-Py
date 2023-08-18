@@ -1,6 +1,6 @@
 Ting der skal laves til LectioPy2:
 
-Hente skema for specifik uge      []
+Hente skema for specifik uge      [X]
 
 Fikse lokale mangler sidste char  []
 

@@ -4,6 +4,10 @@ Hente skema for specifik uge      []
 
 Fikse lokale mangler sidste char  []
 
+Henta note og data fra modul      []
+
+automatiser kreation af modul obj []
+
 Hente data fra modul side         []
 
 Sende beskeder                    []

@@ -39,11 +39,10 @@ def get_elev_ID(skoleID,session):
     # til en anden side hvor elevID er i URL, elevID bliver taget fra den URL
     url = "https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID)
 
-
     soup = getSoup(url, session)
 
     try:
-        href = soup.find("a", attrs={"class":"ls-user-name"})["href"]
+        href = soup.find("a", attrs={"id":"s_m_HeaderContent_subnavigator_ctl05"})["href"]
     except:
         raise ValueError("ikke logget ind, tjek brugernavn og adgangskode")
 
@@ -141,8 +140,12 @@ class Besked:
 
 # anskaf alle moduler i DENNE uge.
 
-def get_moduler_this_week(schoolID,elevID,session):
-    siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(schoolID,elevID)
+def get_all_moduler(schoolID,elevID,session,week_year="X",):
+    if week_year == "X":
+
+        siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(schoolID,elevID)
+    else:
+        siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?week={2}".format(schoolID, elevID,week_year)
     siteSoup = getSoup(siteUrl, session)
 
     # find alle moduler, de kan blive placeret ud fra dato som står på modulet.
@@ -168,8 +171,16 @@ def get_moduler_this_week(schoolID,elevID,session):
                 # hvert modul har et tool tip hvor lokale, note og tidspunkt står i.
                 a_tag_additional_info = a_tag["data-additionalinfo"]
                 Lokale_Index = a_tag_additional_info.index("Lokale:")+8
-                print(a_tag_additional_info[Lokale_Index:a_tag_additional_info.find("\n",Lokale_Index)])
+                modul_lokale = a_tag_additional_info[Lokale_Index:a_tag_additional_info.find("\n",Lokale_Index)]
 
+                # Modul tid og dato, findes også i additional info, den ligger altid over "hold" og alle moduler
+                # har hold og dato/tid så det vil altid virke, ellers skriver den FEJL og så ved jeg ikke lige
+                # hvad der skal gøres.
+                additional_info_splitt = a_tag_additional_info.split("\n")
+                modul_dato_tid = "FEJL"
+                for index, newLine in enumerate( additional_info_splitt):
+                    if "Hold:" in newLine:
+                        modul_dato_tid = additional_info_splitt[index-1].replace("\n","")
 
                 # modulets ID ligger i modulets link i absid attributten
                 modul_ID= a_tag_href[a_tag_href.index("absid=")+6:a_tag_href.index("&")]
@@ -198,7 +209,7 @@ def get_moduler_this_week(schoolID,elevID,session):
                         # som den eneste.
                         modul_titel = span.text
 
-                print(str(dag)+"\n"+modul_titel+"\n"+"modul_lokale"+"\n"+modul_status+"\n"+" ".join(modul_hold)+"\n"+" ".join(modul_lære)+"\n"+modul_ID+"\n"+modul_pos)
+                print(str(dag)+"\n"+modul_titel+"\n"+modul_dato_tid+"\n"+modul_lokale+"\n"+modul_status+"\n"+" ".join(modul_hold)+"\n"+" ".join(modul_lære)+"\n"+modul_ID+"\n"+modul_pos)
 
                 print("\nFÆRDIGT MODUL\n////////////////////////\n")
             else:
@@ -237,7 +248,8 @@ class Modul:
 sesh = getLoginSession("","","523")
 e_id= get_elev_ID("523",sesh)
 
-get_moduler_this_week("523",e_id,sesh)
+
+get_all_moduler("523",e_id,sesh,"342023")
 
 
 """

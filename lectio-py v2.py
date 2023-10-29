@@ -42,7 +42,7 @@ def get_elev_ID(skoleID,session):
     soup = getSoup(url, session)
 
     try:
-        href = soup.find("a", attrs={"id":"s_m_HeaderContent_subnavigator_ctl05"})["href"]
+        href = soup.find("a", attrs={"id":"s_m_HeaderContent_subnavigator_ctl03"})["href"]
     except:
         raise ValueError("ikke logget ind, tjek brugernavn og adgangskode")
 

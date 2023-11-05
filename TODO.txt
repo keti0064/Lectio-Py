@@ -4,11 +4,11 @@ Hente skema for specifik uge      [X]
 
 Fikse lokale mangler sidste char  []
 
-Henta note og data fra modul      []
+Henta note og data fra modul      [x]
 
-automatiser kreation af modul obj []
+automatiser kreation af modul obj [x]
 
-Hente data fra modul side         []
+Hente data fra modul side         [x]
 
 Sende beskeder                    []
 

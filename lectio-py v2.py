@@ -19,8 +19,10 @@ def getLoginSession(username,password,schoolID):
         "__EVENTTARGET": "m$Content$submitbtn2",
         "__EVENTARGUMENT": "",
         "masterfootervalue": "X1!ÆØÅ",
-        "LectioPostbackId": ""
+        "LectioPostbackId": "",
+
     }
+
     loginSession.post(postUrl,data=loginPayload)
     return loginSession
 
@@ -28,7 +30,25 @@ def getLoginSession(username,password,schoolID):
 
 
 def getSoup(URL, session):
-    return BeautifulSoup(session.get(URL).content,"html.parser")
+    headers = {
+        "Content-Length": "571",
+        "Sec-Ch-Ua": "\"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"",
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "\"Linux\"",
+        "Upgrade-Insecure-Requests": "1",
+        "Content-Length": "0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
+        "Referer": "https://www.lectio.dk/lectio/523/forside.aspx",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Priority": "u=0, i"
+    }
+    return BeautifulSoup(session.get(URL, headers=headers).content,"html.parser")
 
 
 def postSoup(URL,session,payload):
@@ -60,7 +80,7 @@ def test(skoleID,session,printToggle=False):
     data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
 
     if printToggle == True:
-        print(data)
+        print(data, session.cookies)
         return
     else:
         return data
@@ -116,6 +136,7 @@ class Besked:
             "__VIEWSTATEENCRYPTED":"",
             "masterfootervalue":    "X1!ÆØÅ",
             "LectioPostbackId": ""
+
         }
 
         pageSoup = postSoup(besked_url,session,postPayload)
@@ -138,30 +159,32 @@ class Besked:
 def get_all_moduler(schoolID,elevID,session,week_year="X",):
     if week_year == "X":
 
-        siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?type=elev&elevid={1}".format(schoolID,elevID)
+        siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?".format(schoolID)
     else:
         siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?week={2}".format(schoolID, elevID,week_year)
     siteSoup = getSoup(siteUrl, session)
-
     # find alle moduler, de kan blive placeret ud fra dato som står på modulet.
     alleDageDivs = siteSoup.findAll("div", {"class":"s2skemabrikcontainer lec-context-menu-instance"})
-
     #liste med alle modul html elementerne på en uge
     ugeModuler = []
 
-    # iterere igennem alle dage divs, finder alle a_tags, som er hvert enkelt modul og ligger det i en liste
+    # iterererr igennem alle dage divs, finder alle a_tags, som er hvert enkelt modul og ligger det i en liste
     # den liste bliver smidt ind i moduler, så hver dag er en liste af moduler i moduler
     for dagDiv in alleDageDivs:
         # generer modul objekter
         ugeModuler.append(dagDiv.findAll("a"))
-
     # liste af dage med moduler omskrevet til modul objekter
     denneUge = []
     for dagNum,dag in enumerate(ugeModuler):
         # liste af denne dags moduler, som modul objektet
         denneDag=[]
         for a_num, a_tag in enumerate(dag):
-            data = a_tag.find("div",{"class":"s2skemabrikcontent"})
+            data = a_tag.find("div",{"class":"s2skemabrikInnerContainer"})
+            #print(data)
+
+
+
+            #tester
             if data != None:
 
                 # nyt modul
@@ -228,6 +251,7 @@ def get_all_moduler(schoolID,elevID,session,week_year="X",):
                 denneDag.append(Modul(modul_lære,modul_hold,modul_pos,modul_lokale,modul_dato_tid,modul_status,modul_ID,modul_titel))
                 #slut modul
             else:
+                #print("ingen data")
                 continue
 
         denneUge.append(denneDag)
@@ -266,3 +290,5 @@ class Modul:
             lektier_øvrigt = None
 
         return note, lektier_øvrigt
+
+

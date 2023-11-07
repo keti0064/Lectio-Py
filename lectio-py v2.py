@@ -82,10 +82,13 @@ def get_elev_ID(skoleID,session):
 
 def test(skoleID,session,printToggle=False):
     soup= getSoup("https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID),session,skoleID)
-    data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
+    try:
+        data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
+    except:
+        data= "Ikke logget ind!!! /relog for at logge ind igen"
 
     if printToggle == True:
-        print(data, session.cookies)
+        print(data)
         return
     else:
         return data

@@ -29,7 +29,7 @@ def getLoginSession(username,password,schoolID):
 # retunere suppen til en URL med den active session(altså det aktive login :)
 
 
-def getSoup(URL, session):
+def getSoup(URL, session,school_id):
     headers = {
         "Content-Length": "571",
         "Sec-Ch-Ua": "\"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"",
@@ -43,12 +43,16 @@ def getSoup(URL, session):
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-User": "?1",
         "Sec-Fetch-Dest": "document",
-        "Referer": "https://www.lectio.dk/lectio/523/forside.aspx",
+        "Referer": "https://www.lectio.dk/lectio/{0}/forside.aspx".format(school_id),
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Priority": "u=0, i"
     }
-    return BeautifulSoup(session.get(URL, headers=headers).content,"html.parser")
+
+    cookies = {
+        'isloggedin3': 'Y'
+    }
+    return BeautifulSoup(session.get(URL, headers=headers,cookies=cookies).content,"html.parser")
 
 
 def postSoup(URL,session,payload):
@@ -60,7 +64,8 @@ def get_elev_ID(skoleID,session):
     # til en anden side hvor elevID er i URL, elevID bliver taget fra den URL
     url = "https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID)
 
-    soup = getSoup(url, session)
+    soup = getSoup(url, session,skoleID)
+
 
     try:
         href = soup.find("a", attrs={"id":"s_m_HeaderContent_subnavigator_ctl03"})["href"]
@@ -76,7 +81,7 @@ def get_elev_ID(skoleID,session):
 
 
 def test(skoleID,session,printToggle=False):
-    soup= getSoup("https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID),session)
+    soup= getSoup("https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID),session,skoleID)
     data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
 
     if printToggle == True:
@@ -91,7 +96,7 @@ def test(skoleID,session,printToggle=False):
 def get_all_messages(skoleID,elevID,session):
     besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(skoleID,elevID)
     beskeder = []
-    soup = getSoup(besked_url,session)
+    soup = getSoup(besked_url,session,skoleID)
     tr_list = soup.findAll("tr")
 
     for tr in tr_list[1:]:
@@ -125,7 +130,7 @@ class Besked:
         besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=showthread&elevid={1}&selectedfolderid=-70&id={2}".format(skoleID,elevID,self.ID)
         besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(skoleID, elevID)
 
-        viewstatex_value = getSoup(besked_forside_url,session).find("input", id="__VIEWSTATEX")["value"]
+        viewstatex_value = getSoup(besked_forside_url,session,skoleID).find("input", id="__VIEWSTATEX")["value"]
 
         postPayload = {
             "__EVENTTARGET": "__PAGE",
@@ -162,7 +167,7 @@ def get_all_moduler(schoolID,elevID,session,week_year="X",):
         siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?".format(schoolID)
     else:
         siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?week={2}".format(schoolID, elevID,week_year)
-    siteSoup = getSoup(siteUrl, session)
+    siteSoup = getSoup(siteUrl, session,schoolID)
     # find alle moduler, de kan blive placeret ud fra dato som står på modulet.
     alleDageDivs = siteSoup.findAll("div", {"class":"s2skemabrikcontainer lec-context-menu-instance"})
     #liste med alle modul html elementerne på en uge
@@ -180,11 +185,7 @@ def get_all_moduler(schoolID,elevID,session,week_year="X",):
         denneDag=[]
         for a_num, a_tag in enumerate(dag):
             data = a_tag.find("div",{"class":"s2skemabrikInnerContainer"})
-            #print(data)
 
-
-
-            #tester
             if data != None:
 
                 # nyt modul
@@ -251,7 +252,6 @@ def get_all_moduler(schoolID,elevID,session,week_year="X",):
                 denneDag.append(Modul(modul_lære,modul_hold,modul_pos,modul_lokale,modul_dato_tid,modul_status,modul_ID,modul_titel))
                 #slut modul
             else:
-                #print("ingen data")
                 continue
 
         denneUge.append(denneDag)
@@ -275,7 +275,7 @@ class Modul:
     def get_site_data(self, skoleID, elevID, session):
         # Her behøves der ikke at anskaffes viewstatex, get requesten kan bare køres direkte
         siteURL = "https://www.lectio.dk/lectio/{0}/aktivitet/aktivitetforside2.aspx?absid={1}&prevurl=SkemaNy.aspx%3ftype%3delev%26elevid%3d{2}&elevid={2}".format(skoleID,self.id,elevID)
-        pageSoup = getSoup(siteURL,session)
+        pageSoup = getSoup(siteURL,session,skoleID)
 
         # find note hvis der er nogen
         try:
@@ -290,5 +290,3 @@ class Modul:
             lektier_øvrigt = None
 
         return note, lektier_øvrigt
-
-

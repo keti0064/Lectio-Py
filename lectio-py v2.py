@@ -20,10 +20,33 @@ def getLoginSession(username,password,schoolID):
         "__EVENTARGUMENT": "",
         "masterfootervalue": "X1!ÆØÅ",
         "LectioPostbackId": "",
-
     }
 
-    loginSession.post(postUrl,data=loginPayload)
+    headers = {
+        "Content-Length": "571",
+        "Sec-Ch-Ua": "\"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"",
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "\"Linux\"",
+        "Upgrade-Insecure-Requests": "1",
+        "Content-Length": "0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
+        "Referer": "https://www.lectio.dk/lectio/{0}/forside.aspx".format(schoolID),
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Priority": "u=0, i"
+    }
+
+    cookies = {
+        'isloggedin3': 'Y'
+    }
+
+    response = loginSession.post(postUrl,data=loginPayload, headers=headers,cookies=cookies)
+    print("Login response:",response)
     return loginSession
 
 # retunere suppen til en URL med den active session(altså det aktive login :)
@@ -55,8 +78,31 @@ def getSoup(URL, session,school_id):
     return BeautifulSoup(session.get(URL, headers=headers,cookies=cookies).content,"html.parser")
 
 
-def postSoup(URL,session,payload):
-    return BeautifulSoup(session.post(URL,data=payload).content,"html.parser")
+def postSoup(URL,session,payload,school_id):
+    headers = {
+        "Content-Length": "571",
+        "Sec-Ch-Ua": "\"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"",
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "\"Linux\"",
+        "Upgrade-Insecure-Requests": "1",
+        "Content-Length": "0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
+        "Referer": "https://www.lectio.dk/lectio/{0}/forside.aspx".format(school_id),
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Priority": "u=0, i"
+    }
+
+    cookies = {
+        'isloggedin3': 'Y'
+    }
+
+    return BeautifulSoup(session.post(URL,data=payload,headers=headers,cookies=cookies).content,"html.parser")
 
 
 def get_elev_ID(skoleID,session):
@@ -85,7 +131,7 @@ def test(skoleID,session,printToggle=False):
     try:
         data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
     except:
-        data= "Ikke logget ind!!! /relog for at logge ind igen"
+        data= "Ikke logget ind"
 
     if printToggle == True:
         print(data)
@@ -129,7 +175,7 @@ class Besked:
     def consolePrintMessageInfo(self):
         print(self.titel,self.sender,self.modtager,self.seneste_besked,self.dato,self.ID)
 
-    def getMessageDialog(self,skoleID,elevID,session):
+    def getMessageDialog(self,skoleID,elevID,session,school_id):
         besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=showthread&elevid={1}&selectedfolderid=-70&id={2}".format(skoleID,elevID,self.ID)
         besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(skoleID, elevID)
 
@@ -147,7 +193,7 @@ class Besked:
 
         }
 
-        pageSoup = postSoup(besked_url,session,postPayload)
+        pageSoup = postSoup(besked_url,session,postPayload,school_id=school_id)
         # sorter efter svar
         svar = pageSoup.find("ul",id="s_m_Content_Content_ThreadList").findAll("li")
         for s in svar:

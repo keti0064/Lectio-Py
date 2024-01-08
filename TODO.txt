@@ -2,7 +2,7 @@ Ting der skal laves til LectioPy2:
 
 Hente skema for specifik uge      [X]
 
-Fikse lokale mangler sidste char  []
+Fikse lokale mangler sidste char  [x] ?? jeg har ikke ændret noget i koden men det virker nu (8/1/2024)
 
 Henta note og data fra modul      [x]
 

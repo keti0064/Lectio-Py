@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 
 
@@ -104,11 +105,10 @@ class Besked:
     def consolePrintMessageInfo(self):
         print(self.titel, self.sender, self.modtager, self.seneste_besked, self.dato, self.ID)
 
-    def getMessageDialog(self, skoleID, elevID, session):
-        besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=showthread&elevid={1}&selectedfolderid=-70&id={2}".format(
-            skoleID, elevID, self.ID)
-        besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(
-            skoleID, elevID)
+    def getMessageDialog(self, skoleID, session):
+        besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(skoleID)
+        besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&selectedfolderid".format(
+            skoleID)
 
         viewstatex_value = getSoup(besked_forside_url, session).find("input", id="__VIEWSTATEX")["value"]
 
@@ -125,18 +125,34 @@ class Besked:
 
         pageSoup = postSoup(besked_url, session, postPayload)
         # sorter efter svar
-        svar = pageSoup.find("ul", id="s_m_Content_Content_ThreadList").findAll("li")
-        for s in svar:
-            style = s["style"][13]
 
-            # sender:
-            sender = s.find("span").text
-            # text
 
-            tab = "\t" * int(style)
-            text = s.find("div").text
-            text = text.replace("\r", "").replace("\n", "\n" + tab)
-            print(tab, "[x]", sender, "\n", tab, text, "\n")
+        table = pageSoup.find("table", id="s_m_Content_Content_MessageThreadCtrl_MessagesGV")
+        messages = [messageDiv.find("div",id="GridRowMessage") for messageDiv in table.findAll("tr")]
+
+        for message in messages:
+
+            fullMessageString = ""
+
+            # tjekker om der er noget tekst i beskeden, hvis ikke skip beskeden.
+            try:
+                sender = message.find("div", attrs={"class":"message-thread-message-sender"}).text
+                sender = sender.replace("\n","").replace("\t","").replace("\r","")
+            except:
+                continue
+            messageContentDiv = message.find("div",attrs={"class": "message"})
+            titel = messageContentDiv.find("div",attrs={"class": "message-replysum-header-menu"}).findAll("div")[0].text.strip("\n\n")
+            titel = re.sub("[\t\r\n]","",titel)
+            content = messageContentDiv.find("div",attrs={"class": "message-thread-message-content"}).text.replace("\t","")
+
+
+            print("TITEL: "+titel)
+            print("SENDER: "+sender)
+            print("CONTENT: "+content)
+
+
+
+
 
 
 # anskaf alle moduler i en uge
@@ -246,17 +262,12 @@ class Modul:
 
 # TEST
 """
-sesh = getLoginSession("","","")
+sesh = getLoginSession("","","523")
 e = get_elev_ID("523",sesh)
 
-alle_dage=get_all_moduler("523",e,sesh)
+beskeder= get_all_messages("523",e,sesh)
+for b in beskeder:
+    print(b.ID)
 
-
-for dagN, dag in enumerate(alle_dage):
-    print("\n----------------------dag:",dagN,"----------------------------------\n")
-    for modulN, modul in enumerate(dag):
-        print("\nModul nr:",modulN)
-
-        print(modul.titel,modul.hold,modul.tid,modul.status,modul.position)
-
+beskeder[0].getMessageDialog("523",sesh)
 """

@@ -257,14 +257,84 @@ class Modul:
         # midlertidlig test
         print(pageSoup.text)
 
+# opgaver, hente opgave data
+def get_all_opgaver(schoolID,session):
+    baseURL = "https://www.lectio.dk/lectio/{0}/OpgaverElev.aspx".format(schoolID)
+    soup = getSoup(baseURL, session)
+
+    tableElement = soup.find("table", id="s_m_Content_Content_ExerciseGV")
+    # Alle opgaver står i et enkelt table og er fordelt i tr elementer, data står i samme rækkefølge altid i td
+    # rækken og der kan derfor tildeles værdier som under:
+    allRows = tableElement.findAll("tr")
+
+
+    allOpgaver = []
+    # genere opgave objekter
+    for row in allRows[1::]:
+        allTD = row.findAll("td")
+
+        uge = allTD[0].text
+        hold = allTD[1].text
+        opgavetitel = allTD[2].text
+        link = allTD[2].find("a")["href"]
+        frist = allTD[3].text
+        elevtid = allTD[4].text
+        status = allTD[5].text
+        fravær = allTD[6].text
+        afventer = allTD[7].text
+        opgavenote = allTD [8].text
+        karakter = allTD[9].text
+        elevnote = allTD[10].text
+
+        allOpgaver.append(Opgave(uge,hold,opgavetitel,link,frist,elevtid,status,fravær,afventer,opgavenote,karakter,elevnote))
+
+    return allOpgaver
+
+
+
+class Opgave():
+
+    def __init__(self, uge,hold,opgavetitel,link,frist,elevtid,status,fravær,afventer,opgavenote,karakter,elevnote):
+        self.uge = uge,
+        self. hold = hold
+        self.opgavetitel = opgavetitel
+        self.link = link
+        self.frist = frist
+        self. elevtid = elevtid
+        self.status = status
+        self.fravær = fravær
+        self.afventer = afventer
+        self.opgavenote = opgavenote
+        self.karakter = karakter
+        self.elevnote = elevnote
+
+    def cliPrintOpgave(self):
+        print(self.uge, self.hold,self.opgavetitel,self.link,self.frist,self.elevtid,self.status,
+              self.fravær,self.afventer,self.opgavenote,self.karakter,self.elevnote)
+
+
+# hente fraværs data
+def get_fraværs_data(schoolID,session):
+    baseURL = "https://www.lectio.dk/lectio/{0}/subnav/fravaerelev_fravaersaarsager.aspx".format(schoolID)
+
+    soup = getSoup(baseURL,session)
+    table = soup.find("div",id="s_m_Content_Content_Samletfravaer_pa").find("table")
+
+    fremmøde = table.find("span", id="s_m_Content_Content_FremmoedeFravaer").text
+    skriftelig = table.find("span", id="s_m_Content_Content_SkriftligFravaer").text
+    # returnere fravær i format [fremmødem skriftelig]
+    return fremmøde,skriftelig
+
+
+
+
+
+
+
+
 # TEST
 """
 sesh = getLoginSession("","","523")
 e = get_elev_ID("523",sesh)
-
-beskeder= get_all_messages("523",e,sesh)
-for b in beskeder:
-    print(b.ID)
-
-beskeder[0].getMessageDialog("523",sesh)
+print(get_fraværs_data("523",sesh))
 """

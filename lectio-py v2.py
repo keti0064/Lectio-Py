@@ -124,36 +124,33 @@ class Besked:
         }
 
         pageSoup = postSoup(besked_url, session, postPayload)
-        # sorter efter svar
 
 
+        # kigger soup igennem efter table tagget som indeholder hele samtalen.
         table = pageSoup.find("table", id="s_m_Content_Content_MessageThreadCtrl_MessagesGV")
         messages = [messageDiv.find("div",id="GridRowMessage") for messageDiv in table.findAll("tr")]
 
+
+        allFormatedMessages = []
         for message in messages:
-
-            fullMessageString = ""
-
             # tjekker om der er noget tekst i beskeden, hvis ikke skip beskeden.
             try:
                 sender = message.find("div", attrs={"class":"message-thread-message-sender"}).text
                 sender = sender.replace("\n","").replace("\t","").replace("\r","")
             except:
                 continue
+
+            # finder det "div" tag som indeholder resten af beskedens data
             messageContentDiv = message.find("div",attrs={"class": "message"})
             titel = messageContentDiv.find("div",attrs={"class": "message-replysum-header-menu"}).findAll("div")[0].text.strip("\n\n")
             titel = re.sub("[\t\r\n]","",titel)
             content = messageContentDiv.find("div",attrs={"class": "message-thread-message-content"}).text.replace("\t","")
 
+            allFormatedMessages.append([titel,sender,content])
 
-            print("TITEL: "+titel)
-            print("SENDER: "+sender)
-            print("CONTENT: "+content)
-
-
-
-
-
+        # returnere hele samtalen i en liste hvor hvert objekt i listen er en besked fra samtalen.
+        # hver besked i samtalen er sat ind i en liste med format [titel, sender, content]
+        return allFormatedMessages
 
 # anskaf alle moduler i en uge
 def get_all_moduler(schoolID,elevID,session,week_year="X",):

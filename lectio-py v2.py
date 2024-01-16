@@ -152,6 +152,88 @@ class Besked:
         # hver besked i samtalen er sat ind i en liste med format [titel, sender, content]
         return allFormatedMessages
 
+def send_message(schoolID,session,modtager,titel,besked):
+    postUrl = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(schoolID)
+    # først skal viewstatex value findes:
+    viewstatex = getSoup(postUrl, session).find("input", id="__VIEWSTATEX")["value"]
+    # derefter skal viewstatex key findes
+    data = {
+        'time': '0',
+        '__EVENTTARGET': 's$m$Content$Content$NewMessageLnk',
+        '__EVENTARGUMENT': '',
+        '__LASTFOCUS': '',
+        '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+        '__VIEWSTATEX': viewstatex,
+        '__VIEWSTATEY_KEY': '',
+        '__VIEWSTATE': '',
+        '__SCROLLPOSITIONX': '0',
+        '__SCROLLPOSITIONY': '0',
+        '__VIEWSTATEENCRYPTED': '',
+        's$m$searchinputfield': '',
+        's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+        's$m$Content$Content$MarkChkDD': '-1',
+        's$m$Content$Content$SPSearchText$tb': '',
+        'masterfootervalue': 'X1!ÆØÅ',
+        'LectioPostbackId': '',
+    }
+    viewstatexkey = postSoup(postUrl,session,data).find("input",id="__VIEWSTATEY_KEY")["value"]
+
+
+
+    for m in modtager:
+        payload = {
+            '__LASTFOCUS': '',
+            'time': '0',
+            '__EVENTTARGET': 's$m$Content$Content$MessageThreadCtrl$AddRecipientBtn',
+            '__EVENTARGUMENT': '',
+            '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+            '__VIEWSTATEY_KEY': viewstatexkey,
+            '__VIEWSTATEX': '',
+            '__VIEWSTATE': '',
+            '__SCROLLPOSITIONX': '0',
+            '__SCROLLPOSITIONY': '0',
+            '__VIEWSTATEENCRYPTED': '',
+            's$m$searchinputfield': '',
+            's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+            's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inpid': m,
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeHeaderTitleTB$tb': '',
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeContentBBTB$TbxNAME$tb': '',
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$AttachmentDocChooser$selectedDocumentId': '',
+            'masterfootervalue': 'X1!ÆØÅ',
+            'LectioPostbackId': '',
+        }
+        # viewstatexkey bliver opdateret hver gang man putter ny modtager på så den skal opdateres her
+        response = postSoup(postUrl,session,payload)
+        viewstatexkey = response.find("input",id="__VIEWSTATEY_KEY")["value"]
+
+    # send message content
+    data = {
+        '__LASTFOCUS': '',
+        'time': '0',
+        '__EVENTTARGET': 's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$SendMessageBtn',
+        '__EVENTARGUMENT': '',
+        '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+        '__VIEWSTATEY_KEY': viewstatexkey,
+        '__VIEWSTATEX': '',
+        '__VIEWSTATE': '',
+        '__SCROLLPOSITIONX': '0',
+        '__SCROLLPOSITIONY': '0',
+        '__VIEWSTATEENCRYPTED': '',
+        's$m$searchinputfield': '',
+        's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+        's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inp': '',
+        's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inpid': '',
+        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeHeaderTitleTB$tb': titel,
+        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeContentBBTB$TbxNAME$tb': besked,
+        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$AttachmentDocChooser$selectedDocumentId': '',
+        'masterfootervalue': 'X1!ÆØÅ',
+        'LectioPostbackId': '',
+    }
+    so = postSoup(postUrl,session,data)
+    #print(so.prettify())
+
+
+
 # anskaf alle moduler i en uge
 def get_all_moduler(schoolID,elevID,session,week_year="X",):
     if week_year == "X":
@@ -336,5 +418,5 @@ def get_fraværs_data(schoolID,session):
 """
 sesh = getLoginSession("","","523")
 e = get_elev_ID("523",sesh)
-print(get_fraværs_data("523",sesh))
+send_message("523",sesh,["S48261364753"],"jeg håber det virker","hvis du læser dette så er alt gået godt")
 """

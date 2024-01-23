@@ -2,6 +2,21 @@ import requests
 import re
 from bs4 import BeautifulSoup
 
+class Client():
+
+    def __init__(self, username:str, password:str, schoolID:str):
+        self.username = username
+        self.password = password
+        self.schoolID = schoolID
+        self.session = getLoginSession(self.username,self.password, self.schoolID)
+        self.elevID = get_elev_ID(self.schoolID,self.session)
+        print(
+    """Lavet klient:
+    Username:   {0}
+    ElevID:     {1}
+    Session:    {2}
+        """.format(self.username,self.elevID,self.session.cookies))
+
 
 def getLoginSession(username: str, password: str, schoolID: str):
     postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(schoolID)
@@ -55,8 +70,10 @@ def get_elev_ID(skoleID, session):
     # plusser med 7 for kun at få elevid og ikke elevid= med
     return str(href[index + 7:])
 
-
-def test(skoleID, session, printToggle=False):
+# metode til at teste om login er gået som det skal >:), du burde få html for lectio forside hvis du er logget ind korrekt.
+def test(Client:Client, printToggle=False):
+    skoleID = Client.schoolID
+    session = Client.session
     soup = getSoup("https://www.lectio.dk/lectio/{0}/forside.aspx".format(skoleID), session)
 
     data = soup.find("div", id="s_m_HeaderContent_MainTitle").text
@@ -70,7 +87,11 @@ def test(skoleID, session, printToggle=False):
 
 # beskeder
 # liste med alle overskrifter tid og start person og link til videre data
-def get_all_messages(skoleID, elevID, session):
+def get_all_messages(Client:Client):
+    session = Client.session
+    skoleID = Client.schoolID
+    elevID = Client.elevID
+
     besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&elevid={1}&selectedfolderid".format(skoleID,
                                                                                                             elevID)
     beskeder = []
@@ -105,7 +126,10 @@ class Besked:
     def consolePrintMessageInfo(self):
         print(self.titel, self.sender, self.modtager, self.seneste_besked, self.dato, self.ID)
 
-    def getMessageDialog(self, skoleID, session):
+    def getMessageDialog(self, Client:Client):
+        skoleID = Client.schoolID
+        session = Client.session
+
         besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(skoleID)
         besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&selectedfolderid".format(
             skoleID)
@@ -152,7 +176,9 @@ class Besked:
         # hver besked i samtalen er sat ind i en liste med format [titel, sender, content]
         return allFormatedMessages
 
-def send_message(schoolID,session,modtager,titel,besked):
+def send_message(Client:Client,modtager,titel,besked):
+    session = Client.session
+    schoolID = Client.schoolID
     postUrl = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(schoolID)
     # først skal viewstatex value findes:
     viewstatex = getSoup(postUrl, session).find("input", id="__VIEWSTATEX")["value"]
@@ -235,7 +261,11 @@ def send_message(schoolID,session,modtager,titel,besked):
 
 
 # anskaf alle moduler i en uge
-def get_all_moduler(schoolID,elevID,session,week_year="X",):
+def get_all_moduler(Client:Client,week_year="X",):
+    schoolID = Client.schoolID
+    elevID = Client.elevID
+    session = Client.session
+
     if week_year == "X":
         siteUrl = "https://www.lectio.dk/lectio/{0}/SkemaNy.aspx?".format(schoolID)
     else:
@@ -316,7 +346,7 @@ def get_all_moduler(schoolID,elevID,session,week_year="X",):
 
 
 class Modul:
-    # anskaffer modulerne ude fra, men de bliver lavet til objekter her. som tillader nem refferat og nemt tilgængeligt
+    # Anskaffer modulerne ude fra, men de bliver lavet til objekter her. Som tillader nem referat og nemt tilgængeligt
     # data fra hvert modul og data fra modulets side
 
     def __init__(self, lærer, hold, position, lokale, tid, status, id, titel):
@@ -329,18 +359,20 @@ class Modul:
         self.id = id
         self.titel = titel
 
-    def get_site_data(self, skoleID, elevID):
+    def get_site_data(self, Client:Client):
+        skoleID = Client.schoolID
+        elevID = Client.elevID
         # Her behøves der ikke at anskaffes viewstatex, get requesten kan bare køres direkte
         siteURL = "/lectio/{0}/aktivitet/aktivitetforside2.aspx?absid={1}&prevurl=SkemaNy.aspx%3ftype%3delev%26elevid%3d{2}&elevid={2}".format(
             skoleID, self.id, elevID)
 
-        pageSoup = getSoup(siteURL)
-
-        # midlertidlig test
-        print(pageSoup.text)
+        print("Denne funktion er ikke færdig endnu")
 
 # opgaver, hente opgave data
-def get_all_opgaver(schoolID,session):
+def get_all_opgaver(Client:Client):
+    schoolID = Client.schoolID
+    session = Client.session
+
     baseURL = "https://www.lectio.dk/lectio/{0}/OpgaverElev.aspx".format(schoolID)
     soup = getSoup(baseURL, session)
 
@@ -373,7 +405,6 @@ def get_all_opgaver(schoolID,session):
     return allOpgaver
 
 
-
 class Opgave():
 
     def __init__(self, uge,hold,opgavetitel,link,frist,elevtid,status,fravær,afventer,opgavenote,karakter,elevnote):
@@ -396,7 +427,10 @@ class Opgave():
 
 
 # hente fraværs data
-def get_fraværs_data(schoolID,session):
+def get_fraværs_data(Client:Client):
+    schoolID = Client.schoolID
+    session = Client.session
+
     baseURL = "https://www.lectio.dk/lectio/{0}/subnav/fravaerelev_fravaersaarsager.aspx".format(schoolID)
 
     soup = getSoup(baseURL,session)
@@ -416,7 +450,11 @@ def get_fraværs_data(schoolID,session):
 
 # TEST
 """
-sesh = getLoginSession("","","523")
-e = get_elev_ID("523",sesh)
-send_message("523",sesh,["S48261364753"],"jeg håber det virker","hvis du læser dette så er alt gået godt")
+client = Client("","","")
+
+m = get_all_moduler(client, "052024")
+
+for a in m:
+    for b in a:
+        print(b.titel)
 """

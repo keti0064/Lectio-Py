@@ -331,7 +331,7 @@ def get_all_moduler(Client:Client,week_year="X",):
         # generer modul objekter
         ugeModuler.append(dagDiv.findAll("a"))
     # liste af dage med moduler omskrevet til modul objekter
-    denneUge = []
+    denneUge = [[],[],[],[],[],[],[]]
     for dagNum,dag in enumerate(ugeModuler):
         # liste af denne dags moduler, som modul objektet
         denneDag=[]
@@ -391,7 +391,7 @@ def get_all_moduler(Client:Client,week_year="X",):
                 #slut modul
             else:
                 continue
-        denneUge.append(denneDag)
+        denneUge[dagNum]=(denneDag)
     return denneUge
 
 
@@ -499,12 +499,10 @@ def get_fraværs_data(Client:Client):
 
 
 # TEST
-"""
-client = Client("","","523")
 
-m = get_all_messages(client)
+client = Client("","","")
 
-for n in m:
-    if n.titel == "test af dims":
-        n.replyToMessage(client, "jeg tester igen", "nu besekd for sjov")
-"""
+m = get_all_moduler(client)
+
+for day in m:
+    print(day)

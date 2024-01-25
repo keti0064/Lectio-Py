@@ -2,7 +2,8 @@ import requests
 import re
 from bs4 import BeautifulSoup
 
-class Client():
+
+class Client:
 
     def __init__(self, username:str, password:str, schoolID:str):
         self.username = username
@@ -18,14 +19,14 @@ class Client():
         """.format(self.username,self.elevID,self.session.cookies))
 
 
+# logger ind som elev, returnere http session
 def getLoginSession(username: str, password: str, schoolID: str):
     postUrl = "https://www.lectio.dk/lectio/{0}/login.aspx".format(schoolID)
 
     loginSession = requests.session()
 
     # anskaffer eventvali ved at lave en normal http get til login siden og kigge html igennem for at finde værdien :)
-    eventValidationValue = \
-        BeautifulSoup(loginSession.get(postUrl).content, "html.parser").find("input", id="__EVENTVALIDATION")["value"]
+    eventValidationValue = BeautifulSoup(loginSession.get(postUrl).content, "html.parser").find("input", id="__EVENTVALIDATION")["value"]
 
     # http request payload
     loginPayload = {
@@ -42,15 +43,17 @@ def getLoginSession(username: str, password: str, schoolID: str):
     return loginSession
 
 
-# returnerer suppen til en URL med den active session(altså det aktive login :)
+# Laver en GET request med den givne session, returnere suppen af svaret
 def getSoup(URL, session):
     return BeautifulSoup(session.get(URL).content, "html.parser")
 
 
+# Laver en POST request med den givne session, returnere suppen af svaret
 def postSoup(URL, session, payload):
     return BeautifulSoup(session.post(URL, data=payload).content, "html.parser")
 
 
+# henter elev id fra en kendt position på forsiden af lectio, som er tilgængelig uden allerede at kende elevID
 def get_elev_ID(skoleID, session):
     # går ind på forsiden (den kræver ikke elevid i URL men kun cookie) elevID findes i en specifik a-tag da den linker
     # til en anden side hvor elevID er i URL, elevID bliver taget fra den URL
@@ -86,7 +89,7 @@ def test(Client:Client, printToggle=False):
 
 
 # beskeder
-# liste med alle overskrifter tid og start person og link til videre data
+#  anskaffer alle beskeder og laver dem til besked objekter.
 def get_all_messages(Client:Client):
     session = Client.session
     skoleID = Client.schoolID
@@ -103,9 +106,10 @@ def get_all_messages(Client:Client):
         td_list_text = [x.text for x in td_list]
 
         ID_tag = (tr.findNext("a", tabindex="0")["onclick"])
-        # skal minus med 1 for at ikke få et ' med
+        # skal minus med 1 for at ikke få et "'" med
         ID = ID_tag[ID_tag.index("MC_$_") + 5:ID_tag.index(")") - 1]
 
+        # laver besked objekter
         besked = Besked(td_list_text[3].replace("\n", ""), td_list_text[4], td_list_text[6], td_list_text[5],
                         td_list_text[8], ID)
 
@@ -126,15 +130,15 @@ class Besked:
     def consolePrintMessageInfo(self):
         print(self.titel, self.sender, self.modtager, self.seneste_besked, self.dato, self.ID)
 
-    def getMessageDialog(self, Client:Client):
+    def postMessageViewStatexSoup(self, Client):
         skoleID = Client.schoolID
         session = Client.session
 
-        besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(skoleID)
         besked_forside_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?type=&selectedfolderid".format(
             skoleID)
 
         viewstatex_value = getSoup(besked_forside_url, session).find("input", id="__VIEWSTATEX")["value"]
+        besked_url = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(skoleID)
 
         postPayload = {
             "__EVENTTARGET": "__PAGE",
@@ -147,8 +151,16 @@ class Besked:
             "LectioPostbackId": ""
         }
 
-        pageSoup = postSoup(besked_url, session, postPayload)
+        soup = postSoup(besked_url, session, postPayload)
+        return soup
 
+    def getMessageViewStatexKey(self, Client:Client):
+        soup = self.postMessageViewStatexSoup(Client)
+        return soup.find("input", id="__VIEWSTATEY_KEY")["value"]
+
+
+    def getMessageDialog(self, Client:Client):
+        pageSoup = self.postMessageViewStatexSoup(Client)
 
         # kigger soup igennem efter table tagget som indeholder hele samtalen.
         table = pageSoup.find("table", id="s_m_Content_Content_MessageThreadCtrl_MessagesGV")
@@ -176,36 +188,97 @@ class Besked:
         # hver besked i samtalen er sat ind i en liste med format [titel, sender, content]
         return allFormatedMessages
 
-def send_message(Client:Client,modtager,titel,besked):
+    def replyToMessage(self, Client:Client,titel,besked):
+        # der skal plusses med to for at lave en ny besked i samtalen.
+        send_message(Client,[],titel,besked,(self.getMessageViewStatexKey(Client),len(self.getMessageDialog(Client))+2))
+
+
+    # metode bruges både til at sende nye beskeder og til replies
+def send_message(Client:Client,modtager,titel,besked,viewstatexkey=""):
     session = Client.session
     schoolID = Client.schoolID
     postUrl = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(schoolID)
-    # først skal viewstatex value findes:
-    viewstatex = getSoup(postUrl, session).find("input", id="__VIEWSTATEX")["value"]
-    # derefter skal viewstatex key findes
-    data = {
-        'time': '0',
-        '__EVENTTARGET': 's$m$Content$Content$NewMessageLnk',
-        '__EVENTARGUMENT': '',
-        '__LASTFOCUS': '',
-        '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
-        '__VIEWSTATEX': viewstatex,
-        '__VIEWSTATEY_KEY': '',
-        '__VIEWSTATE': '',
-        '__SCROLLPOSITIONX': '0',
-        '__SCROLLPOSITIONY': '0',
-        '__VIEWSTATEENCRYPTED': '',
-        's$m$searchinputfield': '',
-        's$m$Content$Content$ListGridSelectionTree$folders': '-70',
-        's$m$Content$Content$MarkChkDD': '-1',
-        's$m$Content$Content$SPSearchText$tb': '',
-        'masterfootervalue': 'X1!ÆØÅ',
-        'LectioPostbackId': '',
-    }
-    viewstatexkey = postSoup(postUrl,session,data).find("input",id="__VIEWSTATEY_KEY")["value"]
+
+
+    # data til ny besked
+    if viewstatexkey == "":
+        postUrl = "https://www.lectio.dk/lectio/{0}/beskeder2.aspx?mappeid=-70".format(schoolID)
+        # først skal viewstatex value findes:
+        viewstatex = getSoup(postUrl, session).find("input", id="__VIEWSTATEX")["value"]
+        # derefter skal viewstatex key findes
+        viewstatexPostData = {
+            'time': '0',
+            '__EVENTTARGET': 's$m$Content$Content$NewMessageLnk',
+            '__EVENTARGUMENT': '',
+            '__LASTFOCUS': '',
+            '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+            '__VIEWSTATEX': viewstatex,
+            '__VIEWSTATEY_KEY': '',
+            '__VIEWSTATE': '',
+            '__SCROLLPOSITIONX': '0',
+            '__SCROLLPOSITIONY': '0',
+            '__VIEWSTATEENCRYPTED': '',
+            's$m$searchinputfield': '',
+            's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+            's$m$Content$Content$MarkChkDD': '-1',
+            's$m$Content$Content$SPSearchText$tb': '',
+            'masterfootervalue': 'X1!ÆØÅ',
+            'LectioPostbackId': '',
+        }
+        viewstatexkey = postSoup(postUrl, session, viewstatexPostData).find("input", id="__VIEWSTATEY_KEY")["value"]
+        # ny besked
+        data = {
+            '__LASTFOCUS': '',
+            'time': '0',
+            '__EVENTTARGET': 's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$SendMessageBtn',
+            '__EVENTARGUMENT': '',
+            '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+            '__VIEWSTATEY_KEY': viewstatexkey,
+            '__VIEWSTATEX': '',
+            '__VIEWSTATE': '',
+            '__SCROLLPOSITIONX': '0',
+            '__SCROLLPOSITIONY': '0',
+            '__VIEWSTATEENCRYPTED': '',
+            's$m$searchinputfield': '',
+            's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+            's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inp': '',
+            's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inpid': '',
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeHeaderTitleTB$tb': titel,
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeContentBBTB$TbxNAME$tb': besked,
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$AttachmentDocChooser$selectedDocumentId': '',
+            'masterfootervalue': 'X1!ÆØÅ',
+            'LectioPostbackId': '',
+        }
+    # data til reply
+    else:
+        messageNum = viewstatexkey[1]
+        if len(str(messageNum)) == 1:
+            messageNum = "0{0}".format(messageNum)
+
+
+        data = {
+            'time': '0',
+            '__EVENTTARGET': 's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl{0}$SendMessageBtn'.format(messageNum),
+            '__EVENTARGUMENT': '',
+            '__LASTFOCUS': '',
+            '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
+            '__VIEWSTATEY_KEY': viewstatexkey[0],
+            '__VIEWSTATEX': '',
+            '__VIEWSTATE': '',
+            '__VIEWSTATEENCRYPTED': '',
+            's$m$searchinputfield': '',
+            's$m$Content$Content$ListGridSelectionTree$folders': '-70',
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl{0}$EditModeHeaderTitleTB$tb'.format(messageNum): titel,
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl{0}$EditModeContentBBTB$TbxNAME$tb'.format(messageNum): besked,
+            's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl{0}$AttachmentDocChooser$selectedDocumentId'.format(messageNum): '',
+            'masterfootervalue': 'X1!ÆØÅ',
+            'LectioPostbackId': '',
+        }
 
 
 
+
+    # tilføj modtagere til beskeden
     for m in modtager:
         payload = {
             '__LASTFOCUS': '',
@@ -233,34 +306,11 @@ def send_message(Client:Client,modtager,titel,besked):
         viewstatexkey = response.find("input",id="__VIEWSTATEY_KEY")["value"]
 
     # send message content
-    data = {
-        '__LASTFOCUS': '',
-        'time': '0',
-        '__EVENTTARGET': 's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$SendMessageBtn',
-        '__EVENTARGUMENT': '',
-        '__SCROLLPOSITION': '{"tableId":"","rowIndex":-1,"rowScreenOffsetTop":-1,"rowScreenOffsetLeft":-1,"pixelScrollTop":0,"pixelScrollLeft":0}',
-        '__VIEWSTATEY_KEY': viewstatexkey,
-        '__VIEWSTATEX': '',
-        '__VIEWSTATE': '',
-        '__SCROLLPOSITIONX': '0',
-        '__SCROLLPOSITIONY': '0',
-        '__VIEWSTATEENCRYPTED': '',
-        's$m$searchinputfield': '',
-        's$m$Content$Content$ListGridSelectionTree$folders': '-70',
-        's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inp': '',
-        's$m$Content$Content$MessageThreadCtrl$addRecipientDD$inpid': '',
-        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeHeaderTitleTB$tb': titel,
-        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$EditModeContentBBTB$TbxNAME$tb': besked,
-        's$m$Content$Content$MessageThreadCtrl$MessagesGV$ctl02$AttachmentDocChooser$selectedDocumentId': '',
-        'masterfootervalue': 'X1!ÆØÅ',
-        'LectioPostbackId': '',
-    }
     so = postSoup(postUrl,session,data)
-    #print(so.prettify())
+    print("sender besked:")
 
 
-
-# anskaf alle moduler i en uge
+# anskaf alle moduler i en uge og laver dem til modul objekter
 def get_all_moduler(Client:Client,week_year="X",):
     schoolID = Client.schoolID
     elevID = Client.elevID
@@ -450,11 +500,11 @@ def get_fraværs_data(Client:Client):
 
 # TEST
 """
-client = Client("","","")
+client = Client("","","523")
 
-m = get_all_moduler(client, "052024")
+m = get_all_messages(client)
 
-for a in m:
-    for b in a:
-        print(b.titel)
+for n in m:
+    if n.titel == "test af dims":
+        n.replyToMessage(client, "jeg tester igen", "nu besekd for sjov")
 """
